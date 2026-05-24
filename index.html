@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VBE Тренажер: Спектральный анализ</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-color: #38bdf8;
+            --accent-neon: #06b6d4;
+            --correct-color: #10b981;
+            --wrong-color: #ef4444;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px dashed #334155;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h1 span {
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .quiz-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quiz-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--accent-color), var(--accent-neon));
+        }
+
+        .q-number {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--accent-color);
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .q-text {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 0 0 25px 0;
+            font-weight: 500;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: #0f172a;
+            border: 1px solid #475569;
+            color: var(--text-color);
+            padding: 16px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover {
+            border-color: var(--accent-color);
+            background-color: rgba(56, 189, 248, 0.05);
+            transform: translateX(4px);
+        }
+
+        .option-btn.correct {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+            border-color: var(--correct-color) !important;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            border-color: var(--wrong-color) !important;
+            color: #ffffff;
+        }
+
+        .option-btn:disabled {
+            pointer-events: none;
+        }
+
+        .rationale {
+            margin-top: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .rationale.correct-box {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--correct-color);
+            color: #a7f3d0;
+        }
+
+        .rationale.wrong-box {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--wrong-color);
+            color: #fca5a5;
+        }
+
+        .nav-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-neon));
+            color: #0f172a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        .nav-btn:disabled {
+            background: #334155;
+            color: var(--text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .progress-bar {
+            background-color: #334155;
+            height: 6px;
+            border-radius: 3px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(to right, var(--accent-color), var(--accent-neon));
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        #result-screen {
+            display: none;
+            text-align: center;
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid #334155;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .score {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin: 20px 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>VBE <span>Спектроскопия</span></h1>
+        <p class="subtitle">Интерактивный тренажер по методам анализа для 11 класса</p>
+    </header>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <div id="quiz-container">
+        <div class="quiz-card">
+            <div class="q-number" id="question-number">Вопрос 1 из 10</div>
+            <div class="q-text" id="question-text">Загрузка вопроса...</div>
+            <div class="options-list" id="options-container">
+                </div>
+            <div class="rationale" id="rationale-box"></div>
+        </div>
+
+        <div class="nav-controls">
+            <div style="color: var(--text-muted)" id="score-counter">Правильных ответов: 0</div>
+            <button class="nav-btn" id="next-btn" onclick="nextQuestion()" disabled>Дальше</button>
+        </div>
+    </div>
+
+    <div id="result-screen">
+        <h2>Тест завершен!</h2>
+        <p class="subtitle">Ваш результат тестирования уровня VBE:</p>
+        <div class="score" id="final-score">0 / 10</div>
+        <p id="result-comment" style="font-size: 1.2rem; line-height: 1.5;"></p>
+        <button class="nav-btn" style="margin-top: 20px;" onclick="restartQuiz()">Пройти еще раз</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            question: "В масс-спектрометрии пучок высокоэнергетических электронов бомбардирует молекулы органического вещества. Какая частица образуется в результате первичного столкновения и позволяет определить относительную молекулярную массу (Mr) соединения?",
+            options: [
+                "Стабильный нейтральный радикал",
+                "Заряженный катион-радикал (молекулярный ион)",
+                "Отрицательно заряженный анион осколка",
+                "Двухзарядный катион углерода"
+            ],
+            correct: 1,
+            rationale: "При выбивании электрона из нейтральной молекулы образуется молекулярный ион (M⁺•), масса которого практически равна массе исходной молекулы. Нейтральные частицы прибором не регистрируются."
+        },
+        {
+            question: "При анализе масс-спектра неизвестного кислородсодержащего вещества ученица обнаружила самый крайний правый интенсивный пик на отметке m/z = 46. Справа от него есть лишь ничтожно малый пик при m/z = 47. Какое из соединений было исследовано?",
+            options: [
+                "Метанол (CH₃OH)",
+                "Этанол (CH₃CH₂OH)",
+                "Этан (C₂H₆)",
+                "Пропаналь (CH₃CH₂CHO)"
+            ],
+            correct: 1,
+            rationale: "Значение m/z молекулярного иона строго равно молярной массе вещества. Молярная масса этанола: 12*2 + 6*1 + 16 = 46 г/моль. Пик 47 — это естественный изотопный пик ¹³C, его в расчет массы не берут."
+        },
+        {
+            question: "Рассматривая ИК-спектр жидкого органического образца, ученица зафиксировала очень интенсивный, узкий и острый пик («подобный мечу») в области 1715 см⁻¹. Наличие какой функциональной группы гарантированно доказывает этот пик?",
+            options: [
+                "Гидроксильной группы (–OH)",
+                "Карбонильной группы (C=O)",
+                "Простой эфирной связи (C-O-C)",
+                "Алкильного радикала (C-H)"
+            ],
+            correct: 1,
+            rationale: "Высокая полярность двойной связи C=O дает один из самых сильных и узнаваемых узких пиков в центральной части ИК-спектра (1650–1815 см⁻¹)."
+        },
+        {
+            question: "В ИК-спектрах каких двух изомеров состава C₃H₆O будет одновременно присутствовать интенсивный характеристический пик в области карбонильной группы, но у одного из них дополнительно появится специфический слабый дублет в области 2720–2820 см⁻¹?",
+            options: [
+                "Пропанол-1 и пропанол-2",
+                "Пропаналь и пропанон",
+                "Пропионовая кислота и метилформат",
+                "Циклопропанол и аллиловый спирт"
+            ],
+            correct: 1,
+            rationale: "Оба вещества содержат группу C=O, но у альдегида (пропаналя) связь C–H при карбонильном углероде дает диагностический дублет при 2720–2820 см⁻¹, который полностью отсутствует у кетона (пропанона/ацетона)."
+        },
+        {
+            question: "При изучении ИК-спектра бутановой кислоты ученик ищет полосу поглощения связи O–H. Какую форму и диапазон будет иметь этот пик согласно официальным константам VBE?",
+            options: [
+                "Узкий и очень острый пик при 1715 см⁻¹",
+                "Экстремально широкое поглощение («подошва») в интервале 3300–2500 см⁻¹",
+                "Идеально гладкий круглый пик строго при 3600–3400 см⁻¹",
+                "Слабый двойной пик при 2200 см⁻¹"
+            ],
+            correct: 1,
+            rationale: "В карбоновых кислотах из-за образования прочных димеров за счет водородных связей пик O–H сильно деформируется, расширяется до огромной «подошвы» и наползает на область поглощения углеводородных связей C–H."
+        },
+        {
+            question: "Шкала химического сдвига (δ) в спектроскопии ¹H-ЯМР измеряется в миллионных долях (ppm) и направлена справа налево. Какой сигнал принят за точку отсчета (0 ppm)?",
+            options: [
+                "Сигнал протонов чистой тяжелой воды (D₂O)",
+                "Сигнал протонов тетраметилсилана (ТМС)",
+                "Сигнал протонов метильной группы метана",
+                "Сигнал свободных радикалов водорода"
+            ],
+            correct: 1,
+            rationale: "Тетраметилсилан Si(CH₃)₄ выбран эталоном. Его 12 протонов эквивалентны, максимально защищены (экранированы) электронами и дают узкий интенсивный сигнал, который искусственно принимают за ноль."
+        },
+        {
+            question: "Какое явление объясняет, почему сигнал протона альдегидной группы (–CHO) смещается в спектре ¹H-ЯМР экстремально далеко влево — в слабое поле (в область 9.0–10.0 ppm)?",
+            options: [
+                "Сильное экранирование ядра электронным облаком углерода",
+                "Деэкранирование ядра вследствие оттягивания электронной плотности атомом кислорода",
+                "Взаимодействие спина протона с изотопами углерода ¹³C",
+                "Быстрый межмолекулярный обмен протонами"
+            ],
+            correct: 1,
+            rationale: "Кислород — сильный электроотрицательный атом. Он стягивает электроны на себя, «оголяя» (деэкранируя) ядро водорода. Чем меньше электронов вокруг протона, тем сильнее он чувствует внешнее магнитное поле и тем дальше влево (в слабое поле) сдвигается его пик."
+        },
+        {
+            question: "Согласно правилу мультиплетности (n+1), на сколько пиков расщепится сигнал протонов метильной группы в молекуле этанола (CH₃-CH₂-OH)?",
+            options: [
+                "На один пик (синглет)",
+                "На три пика (триплет)",
+                "На четыре пика (квадруплет)",
+                "На два пика (дублет)"
+            ],
+            correct: 1,
+            rationale: "Метильная группа –CH₃ граничит с метиленовой группой –CH₂–. У нее два соседа-водорода (n=2). По правилу спин-спинового расщепления: 2 + 1 = 3 пика (триплет)."
+        },
+        {
+            question: "Ученица сравнивает спектры ¹H-ЯМР двух изомеров состава C₃H₆O: пропаналя и пропанона (ацетона). Сколько сигналов (наборов пиков) она зафиксирует для пропанона?",
+            options: [
+                "Три сигнала с интегральным соотношением площадей 3:2:1",
+                "Один единственный синглетный сигнал",
+                "Два сигнала с соотношением площадей 5:1",
+                "Четыре сигнала, включая мультиплет"
+            ],
+            correct: 1,
+            rationale: "Молекула ацетона (CH₃-CO-CH₃) полностью симметрична. Все 6 атомов водорода находятся в абсолютно одинаковом химическом окружении (эквивалентны). Они дают один общий синглетный сигнал, так как у них нет соседей-водородов у центрального карбонильного углерода."
+        },
+        {
+            question: "В рамках концепции связи науки с жизнью (требование программы Литвы STSE), какой метод лежит в основе работы медицинских томографов (МРТ) для сканирования мягких тканей организма?",
+            options: [
+                "Инфракрасная спектроскопия (ИК)",
+                "Ядерный магнитный резонанс (ЯМР)",
+                "Масс-спектрометрия (МС)",
+                "Рентгеноструктурный анализ (РСА)"
+            ],
+            correct: 1,
+            rationale: "Метод МРТ полностью базируется на явлении ядерного магнитного резонанса. Прибор улавливает радиочастотные сигналы от ядер водорода (протонов) нашего тела во внешнем магнитном поле, формируя послойное трехмерное изображение."
+        }
+    ];
+
+    let currentQuestionIdx = 0;
+    let score = 0;
+
+    function loadQuestion() {
+        const qData = quizData[currentQuestionIdx];
+        
+        // Обновление прогресс-бара и номеров
+        document.getElementById("question-number").innerText = `Вопрос ${currentQuestionIdx + 1} из ${quizData.length}`;
+        document.getElementById("question-text").innerText = qData.question;
+        document.getElementById("progress").style.width = `${((currentQuestionIdx) / quizData.length) * 100}%`;
+        
+        // Очистка боксов
+        const optionsContainer = document.getElementById("options-container");
+        optionsContainer.innerHTML = "";
+        const rationaleBox = document.getElementById("rationale-box");
+        rationaleBox.style.display = "none";
+        
+        // Блокировка кнопки перехода
+        document.getElementById("next-btn").disabled = true;
+
+        // Генерация вариантов ответов
+        qData.options.forEach((optionText, idx) => {
+            const btn = document.createElement("button");
+            btn.className = "option-btn";
+            btn.innerText = optionText;
+            btn.onclick = () => selectOption(idx);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function selectOption(selectedIdx) {
+        const qData = quizData[currentQuestionIdx];
+        const buttons = document.getElementsByClassName("option-btn");
+        const rationaleBox = document.getElementById("rationale-box");
+
+        // Блокируем повторные нажатия
+        for (let btn of buttons) {
+            btn.disabled = true;
+        }
+
+        if (selectedIdx === qData.correct) {
+            buttons[selectedIdx].classList.add("correct");
+            score++;
+            document.getElementById("score-counter").innerText = `Правильных ответов: ${score}`;
+            rationaleBox.className = "rationale correct-box";
+            rationaleBox.innerHTML = `<strong>Верно!</strong> ${qData.rationale}`;
+        } else {
+            buttons[selectedIdx].classList.add("wrong");
+            buttons[qData.correct].classList.add("correct");
+            rationaleBox.className = "rationale wrong-box";
+            rationaleBox.innerHTML = `<strong>Ошибка!</strong> ${qData.rationale}`;
+        }
+
+        rationaleBox.style.display = "block";
+        document.getElementById("next-btn").disabled = false;
+    }
+
+    function nextQuestion() {
+        currentQuestionIdx++;
+        if (currentQuestionIdx < quizData.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById("progress").style.width = "100%";
+        document.getElementById("quiz-container").style.display = "none";
+        document.getElementById("result-screen").style.display = "block";
+        document.getElementById("final-score").innerText = `${score} / ${quizData.length}`;
+        
+        let comment = "";
+        if (score === 10) comment = "Великолепный результат! Высший балл! Ученица идеально готова к любым спектральным задачам VBE.";
+        else if (score >= 8) comment = "Отличный уровень подготовки! Базовые паттерны ИК, ЯМР и фрагментации усвоены очень хорошо.";
+        else if (score >= 5) comment = "Хороший результат, но нужно повторить правила мультиплетности ЯМР и характеристические диапазоны поглощения кислот.";
+        else comment = "Рекомендуется еще раз внимательно изучить таблицы спектральных констант и потренироваться на разборе изомеров C₁-C₄.";
+        
+        document.getElementById("result-comment").innerText = comment;
+    }
+
+    function restartQuiz() {
+        currentQuestionIdx = 0;
+        score = 0;
+        document.getElementById("score-counter").innerText = "Правильных ответов: 0";
+        document.getElementById("quiz-container").style.display = "block";
+        document.getElementById("result-screen").style.display = "none";
+        loadQuestion();
+    }
+
+    // Первичный запуск тренажера при загрузке страницы
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
